@@ -1,0 +1,11 @@
+upstream fastcgi_backend {
+   server unix:/var/run/php/php8.3-fpm.sock;
+}
+
+server {
+        listen {{ http_port }};
+        server_name {{ http_host }};
+        root {{ flarum_project_root }}/public;
+
+        include {{ flarum_project_root }}/.nginx[.]conf;
+}

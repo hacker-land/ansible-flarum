@@ -1,0 +1,14 @@
+---
+mysql_root_password: "mysql_root_password"
+mysql_flarum_user: "flarum_user"
+mysql_flarum_password: "flarum_password"
+mysql_flarum_database: "flarum_database"
+mysql_datadir_changed: false
+mysql_datadir: "/var/lib/mysql"
+mysql_innodb_buffer_pool_size: "12G" # set to 80% of RAM
+mysql_innodb_log_file_size: "12G"    # set to 80% of RAM
+mysql_innodb_log_buffer_size: "128M"
+http_host: "your_domain"
+http_conf_name: "your_domain.conf"
+http_port: "80"
+flarum_project_root: "/var/www/html/flarum"

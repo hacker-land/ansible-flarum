@@ -1,0 +1,13 @@
+[mysqld]
+user                           = mysql
+pid-file                       = /var/run/mysqld/mysqld.pid
+socket                         = /var/run/mysqld/mysqld.sock
+port                           = 3306
+datadir                        = {{  mysql_datadir }}
+
+# performance configurations
+innodb_buffer_pool_size        = {{ mysql_innodb_buffer_pool_size }}  # set to 80% of RAM
+innodb_log_file_size           = {{ mysql_innodb_log_file_size }}     # same as buffer pool
+innodb_log_buffer_size         = {{ mysql_innodb_log_buffer_size }}   # increase for large transactions
+innodb_flush_log_at_trx_commit = 0       # will increase write speed but be sure to backup/replicate for reliability
+innodb_flush_method            = O_DSYNC # avoid double-caching when writing to disk
