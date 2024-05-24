@@ -98,13 +98,14 @@
         group: mysql
         mode: 0750
         recurse: yes
-      when: mysql_setup.stat.exists == false and mysql_datadir_changed == true
+      when: mysql_setup.stat.exists == false and mysql_datadir_changed == true and mysql_datadir != "/var/lib/mysql"
 
     - name: Copy MySql file with owner and permissions
       ansible.posix.synchronize:
         src: /var/lib/mysql/
         dest: "{{ mysql_datadir }}"
-      when: mysql_setup.stat.exists == false and mysql_datadir_changed == true
+        perms: yes
+      when: mysql_setup.stat.exists == false and mysql_datadir_changed == true and mysql_datadir != "/var/lib/mysql"
 
     - name: Create new mysql.cnf
       template:
