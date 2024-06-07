@@ -105,6 +105,7 @@
         src: /var/lib/mysql/
         dest: "{{ mysql_datadir }}"
         perms: yes
+      delegate_to: "{{ inventory_hostname }}"
       when: mysql_setup.stat.exists == false and mysql_datadir_changed == true and mysql_datadir != "/var/lib/mysql"
 
     - name: Create new mysql.cnf
