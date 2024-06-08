@@ -64,6 +64,7 @@
       template:
         src: "files/nginx.conf.j2"
         dest: "/etc/nginx/sites-available/{{ http_conf_name }}"
+      notify: Reload Nginx
 
     - name: Enables new site
       file:
