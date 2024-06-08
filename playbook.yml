@@ -91,7 +91,7 @@
       when: mysql_setup.stat.exists == false
 
     - name: Creates MySql data directory
-      ansible.builtin.file:
+      file:
         path: "{{ mysql_datadir }}"
         state: directory
         owner: mysql
@@ -105,6 +105,7 @@
         src: /var/lib/mysql/
         dest: "{{ mysql_datadir }}"
         perms: yes
+        owner: true
       when: mysql_setup.stat.exists == false and mysql_datadir_changed == true and mysql_datadir != "/var/lib/mysql"
 
     - name: Create new mysql.cnf
@@ -190,11 +191,32 @@
         dest: /usr/local/bin/composer
         state: link
 
-    # Sets Up PHP Info Page
-    - name: Sets Up PHP Info Page
+    - name: Creates health check directory
+      file:
+        path: "{{ healthcheck_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: 0755
+
+    - name: Sets Up PHP Health Check Endpoint
       template:
-        src: "files/info.php.j2"
-        dest: "/var/www/html/info.php"
+        src: "files/health_check.php.j2"
+        dest: "{{ healthcheck_root }}/index.php"
+
+    - name: Check flarum project directory
+      stat:
+        path: "{{ flarum_project_root }}"
+      register: flarum_directory
+
+    - name: Creates flarum project directory
+      file:
+        path: "{{ flarum_project_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: 0755
+      when: flarum_directory.stat.exists == false
 
   handlers:
     - name: Reload Nginx
