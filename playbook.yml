@@ -231,7 +231,7 @@
         state: directory
         owner: www-data
         group: www-data
-        mode: 0770
+        mode: 0775
       when: flarum_directory.stat.exists == false
 
   handlers:

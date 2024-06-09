@@ -4,8 +4,8 @@ upstream fastcgi_backend {
 
 server {
     listen {{ http_port }};
-    server_name {{ http_host }};
-    root {{ flarum_project_root }}/public;
+    server_name {{ http_host  }};
+    root {{ flarum_project_root }}/current/public;
 
     location /health-check {
         root /var/www/html;
@@ -26,5 +26,5 @@ server {
         }
     }
 
-    include {{ flarum_project_root }}/.nginx[.]conf;
+    include {{ flarum_project_root }}/current/.nginx[.]conf;
 }
