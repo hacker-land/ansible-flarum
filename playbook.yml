@@ -189,8 +189,22 @@
 
     - name: Composer | Symlink composer.phar
       file:
-        src: composer.phar
-        dest: /usr/local/bin/composer
+        src: /usr/local/bin/composer.phar
+        dest: /usr/bin/composer
+        state: link
+
+    # Install Cachetool
+    # https://github.com/gordalina/cachetool
+    - name: Cachetool | Install Cachetool latest-stable
+      get_url:
+        url: https://github.com/gordalina/cachetool/releases/latest/download/cachetool.phar
+        dest: /usr/local/bin/cachetool.phar
+        mode: 0755
+
+    - name: Cachetool | Symlink cachetool.phar
+      file:
+        src: /usr/local/bin/cachetool.phar
+        dest: /usr/bin/cachetool
         state: link
 
     - name: Creates health check directory
