@@ -234,6 +234,12 @@
         mode: 0775
       when: flarum_directory.stat.exists == false
 
+    - name: adding existing user 'ubuntu' to group 'www-data'
+      user:
+        name: ubuntu
+        groups: www-data
+        append: yes
+
   handlers:
     - name: Reload Nginx
       service:
