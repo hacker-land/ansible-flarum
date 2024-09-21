@@ -317,7 +317,7 @@
         state: directory
         owner: "{{ flarum_user }}"
         group: "{{ flarum_user }}"
-        mode: u=rwX,g=rX,o=rX
+        mode: u=rwX,g=rwX,o=rX
         recurse: yes
       when: flarum_directory.stat.exists == false
 
@@ -328,16 +328,17 @@
         group: "{{ flarum_user }}"
         state: directory
         recurse: yes
-        mode: u=rwX,g=rX,o=rX
+        mode: u=rwX,g=rwX,o=rX
       with_items: [
         '{{ flarum_project_root }}',
       ]
 
-    - name: Adding existing user 'ubuntu' to group '{{ flarum_user }}'
+    - name: Adding existing user '{{ deployer_user }}' to group '{{ flarum_user }}'
       user:
-        name: ubuntu
+        name: {{ deployer_user }}
         groups: "{{ flarum_user }}"
         append: yes
+      when: deployer_user is defined and deployer_user != flarum_user
 
   handlers:
     - name: Reload Nginx
@@ -362,8 +363,8 @@
 
 - name: "Promtail Playbook"
   import_playbook: playbooks/promtail.yml
-  when: promtail_setup is defined and promtail_setup == true
+  when: promtail_setup is defined and promtail_setup is defined and promtail_setup == true
 
 - name: "Fail2ban Playbook"
   import_playbook: playbooks/fail2ban.yml
-  when: fail2ban_setup is defined and fail2ban_setup == true
+  when: fail2ban_setup is defined and fail2ban_setup is defined and fail2ban_setup == true

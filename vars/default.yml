@@ -26,3 +26,4 @@ promtail_setup: false
 promtail_url: "https://<id>:<token>@logs-prod-<server-id>.grafana.net/loki/api/v1/push"
 promtail_environment: "production"
 fail2ban_setup: false
+deployer_user: "ubuntu"

@@ -71,6 +71,8 @@ on:
 
 env:
   PHP_VERSION: '8.3'
+  SSH_USER: 'ubuntu'
+  FLARUM_USER: 'yoursite_user' # use 'www-data' if you don't want to change
 
 jobs:
   configure:
@@ -107,14 +109,15 @@ jobs:
         echo 'nginx_healthcheck_root: "/var/www/html/health-check"' >> vars/yoursite.yml
         echo 'nginx_flarum_root: "/var/www/html/yoursite/current"' >> vars/yoursite.yml
         # flarum_user can be 'www-data' if don't want to create custom user
-        echo 'flarum_user: "yoursite"' >> vars/yoursite.yml
+        echo 'flarum_user: "${{env.FLARUM_USER}}"' >> vars/yoursite.yml
         echo 'flarum_project_root: "/var/www/html/yoursite.com"' >> vars/yoursite.yml
         echo 'flarum_log_path: "/var/www/html/yoursite.com/current/storage/logs/*.log"' >> vars/yoursite.yml
         echo 'promtail_setup: true' >> vars/yoursite.yml
         echo 'promtail_url: "https://<id>:<token>@logs-prod-<server-id>.grafana.net/loki/api/v1/push"' >> vars/yoursite.yml
         echo 'promtail_environment: "production"' >> vars/yoursite.yml
         echo 'fail2ban_setup: true' >> vars/yoursite.yml
-
+        # If your SSH_USER to run php deployer is different than FLARUM_USER
+        echo 'deployer_user: "${{env.SSH_USER}}"' >> vars/yoursite.yml
 
     - name: Run playbook
       uses: dawidd6/action-ansible-playbook@v2
@@ -178,8 +181,6 @@ jobs:
         env:
           PROJECT_PATH: '/var/www/html/yoursite.com'
           SSH_HOST: '${{ vars.PRODUCTION_SSH_HOST }}'
-          SSH_USER: 'ubuntu'
-          FLARUM_USER: 'yoursite' # use 'www-data' if you don't want to change
         with:
           private-key: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
           dep: deploy -v
