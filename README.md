@@ -106,6 +106,7 @@ jobs:
         echo 'nginx_http_port: "80"' >> vars/yoursite.yml
         echo 'nginx_healthcheck_root: "/var/www/html/health-check"' >> vars/yoursite.yml
         echo 'nginx_flarum_root: "/var/www/html/yoursite/current"' >> vars/yoursite.yml
+        # flarum_user can be 'www-data' if don't want to create custom user
         echo 'flarum_user: "yoursite"' >> vars/yoursite.yml
         echo 'flarum_project_root: "/var/www/html/yoursite.com"' >> vars/yoursite.yml
         echo 'flarum_log_path: "/var/www/html/yoursite.com/current/storage/logs/*.log"' >> vars/yoursite.yml
