@@ -1,4 +1,5 @@
 ---
+php_version: "8.3"
 mysql_root_password: "mysql_root_password"
 mysql_flarum_user: "flarum_user"
 mysql_flarum_password: "flarum_password"
@@ -8,8 +9,20 @@ mysql_datadir: "/var/lib/mysql"
 mysql_innodb_buffer_pool_size: "12G" # set to 80% of RAM
 mysql_innodb_log_file_size: "12G"    # set to 80% of RAM
 mysql_innodb_log_buffer_size: "128M"
-http_host: "your_domain"
-http_conf_name: "your_domain.conf"
-http_port: "80"
-healthcheck_root: "/var/www/html/health-check"
+nginx_http_host: "your_domain"
+nginx_http_conf_name: "your_domain.conf"
+nginx_http_port: "80"
+nginx_healthcheck_root: "/var/www/html/health-check"
+# assuming you are using php-deployer to deploy, which creates 'current' directory in project
+nginx_flarum_root: "/var/www/html/flarum/current"
+# command to check if {{ flarum_user }} can access your project
+# sudo -u flarum namei {{ flarum_project_root }}public/index.html
+# use 'www-data' as flarum_user if you don't want to use a different user.
+flarum_user: "flarum"
 flarum_project_root: "/var/www/html/flarum"
+flarum_log_path: "/var/www/html/flarum/current/storage/logs/*.log"
+# optional playbooks
+promtail_setup: false
+promtail_url: "https://<id>:<token>@logs-prod-<server-id>.grafana.net/loki/api/v1/push"
+promtail_environment: "production"
+fail2ban_setup: false

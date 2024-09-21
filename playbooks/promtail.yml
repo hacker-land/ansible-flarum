@@ -1,0 +1,46 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - ../vars/default.yml
+
+  tasks:
+    - name: Download Grafana GPG Key
+      get_url:
+        url: https://apt.grafana.com/gpg.key
+        dest: /tmp/grafana-gpg.key
+
+    - name: De-Armor Grafana GPG Key
+      ansible.builtin.shell: "gpg --dearmor < /tmp/grafana-gpg.key > /etc/apt/keyrings/grafana.gpg"
+      changed_when: false
+      no_log: false
+
+    - name: Add Grafana repository to APT sources list
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+        filename: grafana
+        state: present
+
+    - name: Install Promtail
+      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      loop: [
+        'promtail'
+      ]
+
+    - name: Add promtail user to adm,{{ flarum_user }} group
+      ansible.builtin.user:
+        name: promtail
+        groups: adm,{{ flarum_user }}
+
+    - name: Sets Promtail conf file
+      template:
+        src: "../files/promtail-config.yaml.j2"
+        dest: "/etc/promtail/config.yml"
+      notify:
+        - Reload Promtail
+
+  handlers:
+    - name: Reload Promtail
+      service:
+        name: promtail
+        state: restarted

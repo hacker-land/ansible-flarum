@@ -1,0 +1,37 @@
+server:
+  http_listen_port: 0
+  grpc_listen_port: 8100
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: {{ promtail_url }}
+scrape_configs:
+- job_name: fpm
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: system
+      __path__: /var/log/php{{ php_version }}-fpm.log
+      env: {{ promtail_environment }}
+      instance: ${HOSTNAME}
+- job_name: nginx
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: nginx
+      __path__: /var/log/nginx/*.log
+      env: {{ promtail_environment }}
+      instance: ${HOSTNAME}
+- job_name: flarum
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: flarum
+      __path__: {{ flarum_log_path }}
+      env: {{ promtail_environment }}
+      instance: ${HOSTNAME}

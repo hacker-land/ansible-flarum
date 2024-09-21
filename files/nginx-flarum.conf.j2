@@ -1,0 +1,30 @@
+upstream fastcgi_backend {
+    server unix:/var/run/php/php8.3-fpm.sock;
+}
+
+server {
+    listen {{ nginx_http_port }};
+    server_name {{ nginx_http_host  }};
+    root {{ nginx_flarum_root }}/public;
+
+    location /health-check {
+        root /var/www/html;
+        index index.php;
+
+        access_log off;
+        add_header 'Content-Type' 'application/json';
+
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+
+        location ~ /\.ht {
+            deny all;
+        }
+    }
+
+    include {{ nginx_flarum_root }}/.nginx[.]conf;
+}

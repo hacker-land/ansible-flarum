@@ -5,6 +5,18 @@
     - vars/default.yml
 
   tasks:
+    - name: Ensure group '{{ flarum_user }}' exists
+      ansible.builtin.group:
+        name: "{{ flarum_user }}"
+        state: present
+
+    - name: Add the user '{{ flarum_user }}' appending the group 'adm', 'www-data' and '{{ flarum_user }}' to the user's groups
+      ansible.builtin.user:
+        name: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        groups: "adm,www-data,{{ flarum_user }}"
+        append: yes
+
     - name: Install Prerequisites
       apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
       loop: [
@@ -38,38 +50,110 @@
     - name: Install PHP Packages
       apt: name={{ item }} update_cache=yes state=latest install_recommends=false
       loop: [
-        'php8.3',
-        'php8.3-fpm',
-        'php8.3-common',
-        'php8.3-cli',
-        'php8.3-imagick',
-        'php8.3-gd',
-        'php8.3-mysql',
-        'php8.3-imap',
-        'php8.3-mbstring',
-        'php8.3-xml',
-        'php8.3-xmlrpc',
-        'php8.3-xsl',
-        'php8.3-soap',
-        'php8.3-zip',
-        'php8.3-curl',
-        'php8.3-bcmath',
-        'php8.3-intl',
-        'php8.3-pdo-mysql',
+        'php{{ php_version }}',
+        'php{{ php_version }}-fpm',
+        'php{{ php_version }}-common',
+        'php{{ php_version }}-cli',
+        'php{{ php_version }}-imagick',
+        'php{{ php_version }}-gd',
+        'php{{ php_version }}-mysql',
+        'php{{ php_version }}-imap',
+        'php{{ php_version }}-mbstring',
+        'php{{ php_version }}-xml',
+        'php{{ php_version }}-xmlrpc',
+        'php{{ php_version }}-xsl',
+        'php{{ php_version }}-soap',
+        'php{{ php_version }}-zip',
+        'php{{ php_version }}-curl',
+        'php{{ php_version }}-bcmath',
+        'php{{ php_version }}-intl',
+        'php{{ php_version }}-pdo-mysql',
+        'php{{ php_version }}-opcache',
         'php-redis',
       ]
 
+    - name: Chown php fpm directories
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: directory
+        recurse: yes
+      with_items: [
+        '/run/php',
+        '/var/run/php',
+        '/var/www'
+      ]
+
+    - name: Chown php fpm files
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        mode: u=rwX,g=rX,o=rX
+        state: file
+      with_items: [
+        '/var/log/php{{ php_version }}-fpm.log'
+      ]
+
+    - name: Create new fpm www.conf
+      template:
+        src: "files/php-fpm-www.conf.j2"
+        dest: "/etc/php/{{ php_version }}/fpm/pool.d/www.conf"
+        owner: root
+        group: root
+        mode: 0750
+      notify: Restart FPM
+
+    - name: Create new fpm php common.ini
+      template:
+        src: "files/php-fpm-www.conf.j2"
+        dest: "/etc/php/{{ php_version }}/fpm/conf.d/common.ini"
+        owner: root
+        group: root
+        mode: 0750
+      notify: Restart FPM
+
     # Nginx Configuration
-    - name: Sets Nginx conf file
+    - name: Chown nginx directories
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: directory
+        recurse: yes
+      with_items: [
+        '/var/log/nginx',
+        '/etc/nginx'
+      ]
+
+    - name: Chown nginx files
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: file
+      with_items: [
+        '/run/nginx.pid',
+        '/var/run/nginx.pid',
+      ]
+
+    - name: Sets Default Nginx conf file
       template:
         src: "files/nginx.conf.j2"
-        dest: "/etc/nginx/sites-available/{{ http_conf_name }}"
+        dest: "/etc/nginx/nginx.conf"
+      notify: Reload Nginx
+
+    - name: Sets Flarum Nginx conf file
+      template:
+        src: "files/nginx-flarum.conf.j2"
+        dest: "/etc/nginx/sites-available/{{ nginx_http_conf_name }}"
       notify: Reload Nginx
 
     - name: Enables new site
       file:
-        src: "/etc/nginx/sites-available/{{ http_conf_name }}"
-        dest: "/etc/nginx/sites-enabled/{{ http_conf_name }}"
+        src: "/etc/nginx/sites-available/{{ nginx_http_conf_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ nginx_http_conf_name }}"
         state: link
       notify: Reload Nginx
 
@@ -172,10 +256,10 @@
         state: touch
 
     # UFW Configuration
-    - name: "UFW - Allow HTTP on port {{ http_port }}"
+    - name: "UFW - Allow HTTP on port {{ nginx_http_port }}"
       ufw:
         rule: allow
-        port: "{{ http_port }}"
+        port: "{{ nginx_http_port }}"
         proto: tcp
 
     # Install Composer without using installer
@@ -209,16 +293,18 @@
 
     - name: Creates health check directory
       file:
-        path: "{{ healthcheck_root }}"
+        path: "{{ nginx_healthcheck_root }}"
         state: directory
-        owner: www-data
-        group: www-data
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
         mode: 0770
 
     - name: Sets Up PHP Health Check Endpoint
       template:
         src: "files/health_check.php.j2"
-        dest: "{{ healthcheck_root }}/index.php"
+        dest: "{{ nginx_healthcheck_root }}/index.php"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
 
     - name: Check flarum project directory
       stat:
@@ -229,15 +315,28 @@
       file:
         path: "{{ flarum_project_root }}"
         state: directory
-        owner: www-data
-        group: www-data
-        mode: 0775
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        mode: u=rwX,g=rX,o=rX
+        recurse: yes
       when: flarum_directory.stat.exists == false
 
-    - name: adding existing user 'ubuntu' to group 'www-data'
+    - name: Chown flarum project files and directories
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: directory
+        recurse: yes
+        mode: u=rwX,g=rX,o=rX
+      with_items: [
+        '{{ flarum_project_root }}',
+      ]
+
+    - name: Adding existing user 'ubuntu' to group '{{ flarum_user }}'
       user:
         name: ubuntu
-        groups: www-data
+        groups: "{{ flarum_user }}"
         append: yes
 
   handlers:
@@ -255,3 +354,16 @@
       service:
         name: mysql
         state: restarted
+
+    - name: Restart FPM
+      service:
+        name: php{{ php_version }}-fpm
+        state: restarted
+
+- name: "Promtail Playbook"
+  import_playbook: playbooks/promtail.yml
+  when: promtail_setup is defined and promtail_setup == true
+
+- name: "Fail2ban Playbook"
+  import_playbook: playbooks/fail2ban.yml
+  when: fail2ban_setup is defined and fail2ban_setup == true
