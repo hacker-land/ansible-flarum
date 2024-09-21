@@ -335,7 +335,7 @@
 
     - name: Adding existing user '{{ deployer_user }}' to group '{{ flarum_user }}'
       user:
-        name: {{ deployer_user }}
+        name: "{{ deployer_user }}"
         groups: "{{ flarum_user }}"
         append: yes
       when: deployer_user is defined and deployer_user != flarum_user
