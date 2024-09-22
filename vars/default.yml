@@ -9,8 +9,8 @@ mysql_datadir: "/var/lib/mysql"
 mysql_innodb_buffer_pool_size: "12G" # set to 80% of RAM
 mysql_innodb_log_file_size: "12G"    # set to 80% of RAM
 mysql_innodb_log_buffer_size: "128M"
-nginx_http_host: "your_domain"
-nginx_http_conf_name: "your_domain.conf"
+nginx_http_host: "yoursite"
+nginx_http_conf_name: "yoursite.conf"
 nginx_http_port: "80"
 nginx_healthcheck_root: "/var/www/html/health-check"
 # assuming you are using php-deployer to deploy, which creates 'current' directory in project
