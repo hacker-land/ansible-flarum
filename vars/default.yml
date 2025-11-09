@@ -1,5 +1,6 @@
 ---
 php_version: "8.3"
+mysql_setup: true
 mysql_root_password: "mysql_root_password"
 mysql_flarum_user: "flarum_user"
 mysql_flarum_password: "flarum_password"

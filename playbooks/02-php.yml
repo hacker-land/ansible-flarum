@@ -1,0 +1,121 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - ../vars/default.yml
+
+  tasks:
+    - name: Add php stable repository from PPA and install its signing key on Ubuntu target
+      ansible.builtin.apt_repository:
+        repo: ppa:ondrej/php
+
+    - name: Install php packages
+      apt: name={{ item }} update_cache=yes state=latest install_recommends=false
+      loop: [
+        'php{{ php_version }}',
+        'php{{ php_version }}-fpm',
+        'php{{ php_version }}-common',
+        'php{{ php_version }}-cli',
+        'php{{ php_version }}-imagick',
+        'php{{ php_version }}-gd',
+        'php{{ php_version }}-mysql',
+        'php{{ php_version }}-imap',
+        'php{{ php_version }}-mbstring',
+        'php{{ php_version }}-xml',
+        'php{{ php_version }}-xmlrpc',
+        'php{{ php_version }}-xsl',
+        'php{{ php_version }}-soap',
+        'php{{ php_version }}-zip',
+        'php{{ php_version }}-curl',
+        'php{{ php_version }}-bcmath',
+        'php{{ php_version }}-intl',
+        'php{{ php_version }}-pdo-mysql',
+        'php{{ php_version }}-opcache',
+        'php-redis',
+      ]
+
+    - name: Chown php fpm directories
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: directory
+        recurse: yes
+      with_items: [
+        '/run/php',
+        '/var/run/php',
+        '/var/www'
+      ]
+
+    - name: Create php fpm log file
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        mode: u=rwX,g=rX,o=rX
+        state: touch
+      with_items: [
+        '/var/log/php{{ php_version }}-fpm.log'
+      ]
+
+    - name: Chown php fpm files
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        mode: u=rwX,g=rX,o=rX
+        state: file
+      with_items: [
+        '/var/log/php{{ php_version }}-fpm.log'
+      ]
+
+    - name: Create new fpm www.conf
+      template:
+        src: "../files/php-fpm-www.conf.j2"
+        dest: "/etc/php/{{ php_version }}/fpm/pool.d/www.conf"
+        owner: root
+        group: root
+        mode: 0750
+      notify: Restart fpm
+
+    - name: Create new fpm php common.ini
+      template:
+        src: "../files/php-fpm-www.conf.j2"
+        dest: "/etc/php/{{ php_version }}/fpm/conf.d/common.ini"
+        owner: root
+        group: root
+        mode: 0750
+      notify: Restart fpm
+
+    - name: Composer | Install Composer latest-stable
+      get_url:
+        url: https://getcomposer.org/download/latest-stable/composer.phar
+        checksum: 'sha256:https://getcomposer.org/download/latest-stable/composer.phar.sha256sum'
+        dest: /usr/local/bin/composer.phar
+        mode: 0755
+
+    - name: Composer | Symlink composer.phar
+      file:
+        src: /usr/local/bin/composer.phar
+        dest: /usr/bin/composer
+        state: link
+
+    - name: Cachetool | Install Cachetool latest-stable
+      get_url:
+        url: https://github.com/gordalina/cachetool/releases/latest/download/cachetool.phar
+        dest: /usr/local/bin/cachetool.phar
+        mode: 0755
+
+    - name: Cachetool | Symlink cachetool.phar
+      file:
+        src: /usr/local/bin/cachetool.phar
+        dest: /usr/bin/cachetool
+        state: link
+
+  handlers:
+    - name: Restart fpm
+      service:
+        name: php{{ php_version }}-fpm
+        state: restarted
+        enabled: true
+

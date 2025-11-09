@@ -1,0 +1,112 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - ../vars/default.yml
+
+  tasks:
+    - name: Check .setup flag
+      stat:
+        path: /etc/mysql/.setup
+      register: mysql_setup_flag
+
+    - name: Install mysql server packages
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [
+        'mysql-server',
+        'python3-pymysql' # for ansible to set the mysql root password
+      ]
+      when: mysql_setup_flag.stat.exists == false
+
+    - name: Stop service mysql, if started
+      ansible.builtin.service:
+        name: mysql
+        state: stopped
+      when: mysql_setup_flag.stat.exists == false
+
+    - name: Creates MySql data directory
+      file:
+        path: "{{ mysql_datadir }}"
+        state: directory
+        owner: mysql
+        group: mysql
+        mode: 0750
+        recurse: yes
+      when: mysql_setup_flag.stat.exists == false and mysql_datadir_changed is defined and mysql_datadir_changed == true and mysql_datadir != "/var/lib/mysql"
+
+    - name: Copy MySql file with owner and permissions
+      ansible.posix.synchronize:
+        src: /var/lib/mysql/
+        dest: "{{ mysql_datadir }}"
+        perms: yes
+        owner: true
+      delegate_to: "{{ inventory_hostname }}"
+      when: mysql_setup_flag.stat.exists == false and mysql_datadir_changed is defined and mysql_datadir_changed == true and mysql_datadir != "/var/lib/mysql"
+
+    - name: Create new mysql.cnf
+      template:
+        src: "../files/mysql.cnf.j2"
+        dest: "/etc/mysql/conf.d/mysql.cnf"
+        owner: root
+        group: root
+        mode: 0750
+      notify: Restart MySQL
+
+    - name: Start service mysql, if stopped
+      ansible.builtin.service:
+        name: mysql
+        state: started
+
+    - name: Sets the root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: mysql_root_password is defined and mysql_setup_flag.stat.exists == false
+      ignore_errors: yes
+
+    - name: Removes all anonymous user accounts
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Removes the MySQL test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Create Flarum database
+      mysql_db:
+        name: "{{ mysql_flarum_database }}"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        state: present
+
+    - name: Create Flarum MySQL user
+      mysql_user:
+        name: "{{ mysql_flarum_user }}"
+        password: "{{ mysql_flarum_password }}"
+        priv: "{{ mysql_flarum_database }}.*:ALL"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        state: present
+
+    - name: Create .setup flag
+      file:
+        path: "/etc/mysql/.setup"
+        state: touch
+
+  handlers:
+    - name: Restart MySQL
+      service:
+        name: mysql
+        state: restarted
+        enabled: true
+

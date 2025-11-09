@@ -1,0 +1,33 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - ../vars/default.yml
+
+  tasks:
+    - name: Ensure group '{{ flarum_user }}' exists
+      ansible.builtin.group:
+        name: "{{ flarum_user }}"
+        state: present
+
+    - name: Add the user '{{ flarum_user }}' appending the group 'adm', 'www-data' and '{{ flarum_user }}' to the user's groups
+      ansible.builtin.user:
+        name: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        groups: "adm,www-data,{{ flarum_user }}"
+        append: yes
+
+    - name: Install Prerequisites
+      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      loop: [
+        'aptitude',
+        'curl',
+        'zip',
+        'unzip',
+        'gzip',
+        'wget',
+        'git',
+        'software-properties-common',
+        'ca-certificates',
+        'apt-transport-https'
+      ]

@@ -4,6 +4,7 @@ pid-file                       = /var/run/mysqld/mysqld.pid
 socket                         = /var/run/mysqld/mysqld.sock
 port                           = 3306
 datadir                        = {{  mysql_datadir }}
+local_infile                   = 1
 
 # performance configurations
 innodb_buffer_pool_size        = {{ mysql_innodb_buffer_pool_size }}  # set to 80% of RAM

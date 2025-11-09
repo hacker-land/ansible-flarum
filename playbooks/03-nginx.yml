@@ -1,0 +1,81 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - ../vars/default.yml
+
+  tasks:
+    - name: Install nginx packages
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [
+        'nginx',
+        'libnginx-mod-http-geoip',
+        'geoip-database',
+      ]
+
+    - name: Enable and start nginx service
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Chown nginx directories
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: directory
+        recurse: yes
+      with_items: [
+        '/var/log/nginx',
+        '/etc/nginx'
+      ]
+
+    - name: Chown nginx files
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: file
+      with_items: [
+        '/run/nginx.pid',
+        '/var/run/nginx.pid',
+      ]
+
+    - name: Sets Default Nginx conf file
+      template:
+        src: "../files/nginx.conf.j2"
+        dest: "/etc/nginx/nginx.conf"
+      notify: Reload nginx
+
+    - name: Sets Flarum Nginx conf file
+      template:
+        src: "../files/nginx-flarum.conf.j2"
+        dest: "/etc/nginx/sites-available/{{ nginx_http_conf_name }}"
+      notify: Reload nginx
+
+    - name: Enables new site
+      file:
+        src: "/etc/nginx/sites-available/{{ nginx_http_conf_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ nginx_http_conf_name }}"
+        state: link
+      notify: Reload nginx
+
+    - name: Removes "default" site
+      file:
+        path: "/etc/nginx/sites-enabled/default"
+        state: absent
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded
+        enabled: true
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+        enabled: true

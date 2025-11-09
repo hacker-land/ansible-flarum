@@ -5,6 +5,7 @@ A virtualhost will be created with the options specified in the `vars/default.ym
 
 ## Settings
 - `php_version`: the php version. tested with php `8.3`.
+- `mysql_setup`: setup mysql server flag. example: `true`.
 - `mysql_root_password`: the password for the MySQL root account.
 - `mysql_flarum_user`: the user created for flarum database in mysql.
 - `mysql_flarum_password`: the password for flarum database user in mysql.
@@ -47,6 +48,7 @@ nano vars/yoursite.yml
 #vars/yoursite.yml
 ---
 php_version: "8.3"
+mysql_setup: true # to run mysql setup
 mysql_root_password: "mysql_root_password"
 mysql_flarum_user: "flarum_user"
 mysql_flarum_password: "flarum_password"
@@ -80,12 +82,27 @@ deployer_user: "ubuntu"
 
 #### Manual run on local
 
-```command
+```bash
+# Install ansible
+sudo apt install ansible-core
+
+# for remote
 ansible-playbook -l [target] -i [inventory file] -u [remote user] playbook.yml
 
 # for local
 ansible-playbook --connection=local --inventory 127.0.0.1, playbook.yml --ask-become-pass -e @./vars/yoursite.yml
 ```
+
+#### Manual run on docker
+
+```bash
+docker build -t ansible-flarum .
+docker run -it ansible-flarum /bin/bash
+cd /ansible-flarum
+
+ansible-playbook --connection=local --inventory 127.0.0.1, playbook.yml --ask-become-pass -e @./vars/yoursite.yml
+```
+
 
 #### GitHub Action Pipeline
 
@@ -126,6 +143,7 @@ jobs:
         # Refer vars/default.yml for default values
         echo '---' >> vars/yoursite.yml
         echo 'php_version: "${{env.PHP_VERSION}}"' >> vars/yoursite.yml
+        echo 'mysql_setup: true' >> vars/yoursite.yml
         echo 'mysql_root_password: "${{secrets.MYSQL_ROOT_PASSWORD}}"' >> vars/yoursite.yml
         echo 'mysql_flarum_user: "yoursite"' >> vars/yoursite.yml
         echo 'mysql_flarum_password: "${{secrets.MYSQL_FLARUM_PASSWORD}}"' >> vars/yoursite.yml

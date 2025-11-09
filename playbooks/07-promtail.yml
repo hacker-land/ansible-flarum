@@ -37,10 +37,11 @@
         src: "../files/promtail-config.yaml.j2"
         dest: "/etc/promtail/config.yml"
       notify:
-        - Reload Promtail
+        - Reload promtail
 
   handlers:
-    - name: Reload Promtail
+    - name: Reload promtail
       service:
         name: promtail
         state: restarted
+        enabled: true

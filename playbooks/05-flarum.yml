@@ -1,0 +1,68 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - ../vars/default.yml
+
+  tasks:
+    - name: Install mysql client package
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [
+        'mysql-client',
+      ]
+
+    - name: "UFW - Allow HTTP on port {{ nginx_http_port }}"
+      ufw:
+        rule: allow
+        port: "{{ nginx_http_port }}"
+        proto: tcp
+
+    - name: Creates health check directory
+      file:
+        path: "{{ nginx_healthcheck_root }}"
+        state: directory
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        mode: 0770
+
+    - name: Sets Up PHP Health Check Endpoint
+      template:
+        src: "../files/health_check.php.j2"
+        dest: "{{ nginx_healthcheck_root }}/index.php"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+
+    - name: Check flarum project directory
+      stat:
+        path: "{{ flarum_project_root }}"
+      register: flarum_directory
+
+    - name: Creates flarum project directory
+      file:
+        path: "{{ flarum_project_root }}"
+        state: directory
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        mode: u=rwX,g=rwX,o=rX
+        recurse: yes
+      when: flarum_directory.stat.exists == false
+
+    - name: Chown flarum project files and directories
+      file:
+        path: "{{ item }}"
+        owner: "{{ flarum_user }}"
+        group: "{{ flarum_user }}"
+        state: directory
+        recurse: yes
+        mode: u=rwX,g=rwX,o=rX
+      with_items: [
+        '{{ flarum_project_root }}',
+      ]
+
+    - name: Adding existing user '{{ deployer_user }}' to group '{{ flarum_user }}'
+      user:
+        name: "{{ deployer_user }}"
+        groups: "{{ flarum_user }}"
+        append: yes
+      when: deployer_user is defined and deployer_user != flarum_user
+

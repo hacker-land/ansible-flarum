@@ -16,38 +16,39 @@
         src: "../files/fail2ban-sshd.conf.j2"
         dest: "/etc/fail2ban/jail.d/sshd.conf"
       notify:
-        - Reload Fail2ban
+        - Reload fail2ban
 
     - name: Sets Fail2ban Nginx Auth conf file
       template:
         src: "../files/fail2ban-nginx-http-auth.conf.j2"
         dest: "/etc/fail2ban/jail.d/nginx-http-auth.conf"
       notify:
-        - Reload Fail2ban
+        - Reload fail2ban
 
     - name: Sets Fail2ban Nginx Auth conf file
       template:
         src: "../files/fail2ban-nginx-http-auth.conf.j2"
         dest: "/etc/fail2ban/jail.d/nginx-http-auth.conf"
       notify:
-        - Reload Fail2ban
+        - Reload fail2ban
 
     - name: Sets Fail2ban Nginx Forbidden conf file
       template:
         src: "../files/fail2ban-nginx-forbidden.conf.j2"
         dest: "/etc/fail2ban/jail.d/nginx-forbidden.conf"
       notify:
-        - Reload Fail2ban
+        - Reload fail2ban
 
     - name: Sets Fail2ban Nginx Botsearch conf file
       template:
         src: "../files/fail2ban-nginx-botsearch.conf.j2"
         dest: "/etc/fail2ban/jail.d/nginx-botsearch.conf"
       notify:
-        - Reload Fail2ban
+        - Reload fail2ban
 
   handlers:
-    - name: Reload Fail2ban
+    - name: Reload fail2ban
       service:
         name: fail2ban
         state: restarted
+        enabled: true
