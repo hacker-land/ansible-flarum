@@ -17,6 +17,17 @@
         groups: "adm,www-data,{{ flarum_user }}"
         append: yes
 
+    - name: Ensure apt lock files are not present
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/dpkg/lock
+        - /var/lib/dpkg/lock-frontend
+        - /var/cache/apt/archives/lock
+        - /var/lib/apt/lists/lock
+      when: ansible_facts['os_family'] == "Debian"
+
     - name: Install Prerequisites
       apt: name={{ item }} update_cache=true state=latest force_apt_get=true force=true autoremove=true autoclean=true
       loop: [
