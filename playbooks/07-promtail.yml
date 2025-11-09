@@ -22,7 +22,7 @@
         state: present
 
     - name: Install Promtail
-      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes force=true
       loop: [
         'promtail'
       ]

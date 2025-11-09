@@ -18,7 +18,7 @@
         append: yes
 
     - name: Install Prerequisites
-      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      apt: name={{ item }} update_cache=true state=latest force_apt_get=true force=true autoremove=true autoclean=true
       loop: [
         'aptitude',
         'curl',

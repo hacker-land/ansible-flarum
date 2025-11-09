@@ -6,7 +6,7 @@
 
   tasks:
     - name: Install mysql client package
-      apt: name={{ item }} update_cache=yes state=latest
+      apt: name={{ item }} update_cache=yes state=latest force=true
       loop: [
         'mysql-client',
       ]

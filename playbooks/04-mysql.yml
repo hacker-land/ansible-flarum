@@ -11,7 +11,7 @@
       register: mysql_setup_flag
 
     - name: Install mysql server packages
-      apt: name={{ item }} update_cache=yes state=latest
+      apt: name={{ item }} update_cache=yes state=latest force=true
       loop: [
         'mysql-server',
         'python3-pymysql' # for ansible to set the mysql root password

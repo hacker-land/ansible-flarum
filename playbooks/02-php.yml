@@ -10,7 +10,7 @@
         repo: ppa:ondrej/php
 
     - name: Install php packages
-      apt: name={{ item }} update_cache=yes state=latest install_recommends=false
+      apt: name={{ item }} update_cache=yes state=latest install_recommends=false force=true
       loop: [
         'php{{ php_version }}',
         'php{{ php_version }}-fpm',

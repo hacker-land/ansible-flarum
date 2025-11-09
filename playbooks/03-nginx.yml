@@ -6,7 +6,7 @@
 
   tasks:
     - name: Install nginx packages
-      apt: name={{ item }} update_cache=yes state=latest
+      apt: name={{ item }} update_cache=yes state=latest force=true
       loop: [
         'nginx',
         'libnginx-mod-http-geoip',
