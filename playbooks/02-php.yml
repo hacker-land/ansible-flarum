@@ -34,6 +34,11 @@
         'php-redis',
       ]
 
+    - name: Select default php version
+      ansible.builtin.alternatives:
+        name: php
+        path: "/usr/bin/php{{ php_version }}"
+
     - name: Chown php fpm directories
       file:
         path: "{{ item }}"
