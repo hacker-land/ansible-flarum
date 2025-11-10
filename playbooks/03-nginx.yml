@@ -67,6 +67,22 @@
         state: absent
       notify: Reload nginx
 
+    - name: Allow incoming HTTP traffic on port 80
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 80
+        jump: ACCEPT
+        state: present
+
+    - name: Allow incoming HTTPS traffic on port 443
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 443
+        jump: ACCEPT
+        state: present
+
   handlers:
     - name: Reload nginx
       service:
